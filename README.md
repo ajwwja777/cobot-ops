@@ -8,8 +8,22 @@
 - A6000 主工作区：`/data/LFT-W02_data/jiaan/jiaan/projects/cobot-ops`。
 - 笔记本对话入口：`D:\Code\jiaan_workspace\cobot-ops`。
 - 自有独立仓库：`https://github.com/ajwwja777/cobot-ops`（目标分支 `main`）。
-- Cobot 位置：`/home/agilex/jiaan/project/cobot-ops`，目录已建立；恢复证据已归入 `runtime/recovery/`，运维程序尚未部署。
-- 当前阶段：入口与仓库已初始化，六个 Cobot 项目目录及数据目录已建立，恢复证据批次已验收迁移；业务代码、环境、模型和数据仍待分批迁移，现有服务入口未切换。
+- Cobot 位置：`/home/agilex/jiaan/project/cobot-ops`，恢复证据和现场服务状态归入 `runtime/`，独立终端恢复入口见下文。
+- 当前阶段：恢复证据已迁移；cobot-web 已在新目录服务 8015，日志和任务状态使用本项目 runtime。模型、数据、硬件历史环境仍有旧路径依赖，继续逐批验收。
+
+## 现场故障入口
+
+[网页故障与终端恢复手册](docs/WEB_RECOVERY.md)：刷新／重启的适用范围、HTTP 失败、保存结果不确定、任务 PID 与子进程、模型显存释放、磁盘故障。
+
+在 Cobot 执行：
+
+```bash
+cd /home/agilex/jiaan/project/cobot-ops
+python3 scripts/console_recovery.py status
+python3 scripts/console_recovery.py snapshot
+```
+
+工具只需系统 Python 3 标准库，不依赖网页响应。停止命令默认预览；实际中断及限制请先读手册。测试放在 `tests/`，开发验证用 `python -m pytest -q tests`；现场不必安装 pytest。
 
 ## 负责什么
 
@@ -31,7 +45,7 @@ Cobot 采集及评测数据统一规划在 `/home/agilex/jiaan/data/`。模型�
 
 ## 下一步
 
-先整理现用命令、路径、健康检查和故障分流，迁移一项只读状态查询；核验日志来源和 PID 对应关系，不重启现有服务。
+继续补充故障实例和人工恢复经验，按明确范围迁移硬件与算法依赖；终端恢复入口与网页任务生命周期保持接口一致。不要把文档和只读验证当作真实机器人恢复演练。
 
 旧位置、验收条件和切换／清理规则见迁移记录。
 
