@@ -131,10 +131,41 @@ def targets(role, saved=None):
             raise RecoveryError("PID was reused or belongs to another user")
         if leader["pgid"] != pid or leader["sid"] != pid:
             raise RecoveryError("Not an isolated managed session; use its original terminal")
-    members = [p for p in processes() if p["sid"] == pid]
+    rows = processes()
+    owned = {p["pid"]: p for p in rows if p["sid"] == pid}
+    # roslaunch children commonly setsid(). Keep identities observed before our
+    # interrupt so those children remain traceable after the launcher exits.
+    receipt = read_json(RUNTIME / "recovery-tasks" / (role + ".json"))
+    if receipt.get("pid") == pid and receipt.get("start_ticks") == ticks:
+        prior = {p["pid"]: p["ticks"] for p in receipt.get("members", [])}
+        owned.update({p["pid"]: p for p in rows if prior.get(p["pid"]) == p["ticks"]})
+    while True:
+        children = {p["pid"]: p for p in rows
+                    if p["ppid"] in owned and p["ticks"] >= owned[p["ppid"]]["ticks"]}
+        added = set(children) - set(owned)
+        owned.update(children)
+        if not added:
+            break
+    members = list(owned.values())
     if any(p["uid"] != os.getuid() or p["ticks"] < ticks for p in members):
-        raise RecoveryError("Session ownership cannot be verified")
+        raise RecoveryError("Process tree ownership cannot be verified")
+    groups = {p["pgid"] for p in members}
+    if any(p["pgid"] in groups and p["pid"] not in owned for p in rows):
+        raise RecoveryError("Task shares a process group with unverified processes")
     return members
+
+
+def remember_targets(role, saved, members):
+    """Write only our recovery receipt; never modify the web's task registry."""
+    folder = RUNTIME / "recovery-tasks"
+    folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path = folder / (role + ".json")
+    temporary = folder / (role + "." + str(os.getpid()) + ".tmp")
+    temporary.write_text(json.dumps({
+        "pid": saved.get("pid"), "start_ticks": saved.get("start_ticks"),
+        "members": [{"pid": p["pid"], "ticks": p["ticks"]} for p in members],
+    }, indent=2))
+    temporary.replace(path)
 
 
 def task_rows():
@@ -289,6 +320,7 @@ def interrupt(role, *, execute=False, sig=signal.SIGINT, robot_stopped=False, wa
             raise RecoveryError("Web PID changed")
         os.kill(current[0]["pid"], sig)
     else:
+        remember_targets(role, saved, current)
         for group in sorted({p["pgid"] for p in current}):
             # Re-read before every signal; never signal this operator's own group.
             alive = targets(role, saved)

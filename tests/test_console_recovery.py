@@ -13,6 +13,11 @@ recovery=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recovery)
 
 
+@pytest.fixture(autouse=True)
+def isolated_recovery_receipts(tmp_path, monkeypatch):
+    monkeypatch.setattr(recovery, "RUNTIME", tmp_path / "runtime")
+
+
 def test_pid_reuse_and_shared_terminal_session_are_rejected(monkeypatch):
     saved={"pid":500000,"start_ticks":42}
     current={"pid":500000,"uid":os.getuid(),"ticks":99,"sid":500000,"pgid":500000}
@@ -29,9 +34,10 @@ def test_no_recorded_identity_is_not_silently_trusted(monkeypatch):
 
 
 @pytest.mark.parametrize("orphan",[False,True])
-def test_interrupt_handles_children_in_separate_groups_and_dead_leader(tmp_path,monkeypatch,orphan):
+@pytest.mark.parametrize("new_session", [False, True])
+def test_interrupt_handles_children_in_separate_groups_and_dead_leader(tmp_path,monkeypatch,orphan,new_session):
     target=tmp_path/"child.txt"
-    child_code="import os,time;os.setpgrp();time.sleep(60)"
+    child_code="import os,time;" + ("os.setsid();" if new_session else "os.setpgrp();") + "time.sleep(60)"
     code=("import subprocess,sys,time;from pathlib import Path;"
           "p=subprocess.Popen([sys.executable,'-c',"+repr(child_code)+"]);"
           "Path("+repr(str(target))+").write_text(str(p.pid));time.sleep("+(".5" if orphan else "60")+")")
@@ -47,7 +53,9 @@ def test_interrupt_handles_children_in_separate_groups_and_dead_leader(tmp_path,
                 row=recovery.process(child)
                 if row and row["pgid"]==child:break
             time.sleep(.01)
-        assert child and recovery.process(child)["sid"]==parent.pid
+        assert child and recovery.process(child)["sid"] == (child if new_session else parent.pid)
+        if orphan and new_session:
+            recovery.remember_targets("model", saved, recovery.targets("model", saved))
         if orphan:parent.wait(timeout=3)
         monkeypatch.setattr(recovery,"registration",lambda role:saved)
         monkeypatch.setattr(recovery,"snapshot",lambda:{})
@@ -123,3 +131,12 @@ def test_pause_response_without_paused_state_is_not_success(monkeypatch):
         "ok": True, "payload": {"episode_id": 7, "generation": 9, "policy_paused": False}})
     with pytest.raises(recovery.RecoveryError, match="not confirmed"):
         recovery.pause()
+
+
+def test_recovery_receipt_does_not_adopt_reused_child_pid(monkeypatch):
+    saved = {"pid": 500000, "start_ticks": 42}
+    recovery.remember_targets("arms", saved, [{"pid": 500001, "ticks": 43}])
+    monkeypatch.setattr(recovery, "process", lambda pid: None)
+    monkeypatch.setattr(recovery, "processes", lambda: [
+        {"pid": 500001, "ticks": 90, "ppid": 1, "sid": 500001, "pgid": 500001, "uid": os.getuid()}])
+    assert recovery.targets("arms", saved) == []
