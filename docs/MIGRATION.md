@@ -1,5 +1,7 @@
 # Cobot 使用、部署与运维：迁移记录
 
+当前归属：2026-09-27 用户取消独立 ops 维护层，工具／手册转入 cobot-web；本文件保留历史。
+
 更新：2026-09-27。入口初始化、恢复证据归档、网页新目录切换和本页末尾的终端恢复入口批次已完成；模型／数据和部分硬件环境仍有旧路径依赖。跨项目迁移由当前已有 cobot_rlt 对话统筹执行。以下早期批次保留当时状态。
 
 ## 已有位置与成果
@@ -68,3 +70,13 @@
 - 当前网页源版本：`3b54cf7f58f1a35f70756194cb218484ee39c0e9`，运行目录 `/home/agilex/jiaan/project/cobot-web/app/backend`，端口 8015；相关切换证据和接口修复归 cobot-web。运维 runtime 已被使用，不再处于“只有空目录”的状态。
 - 已查明 ROS launch 为每个节点创建独立 session：单纯杀父 PID 或只观察父 session 不足。工具按真实父子关系记录已见子进程，在自身中断后继续核验残留；在观察之前已脱离父进程且缺少可靠身份的任务仍需要人工核查，绝不泛匹配杀进程。
 - 下一步：按现场真实故障继续补充手册；算法／模型迁移仍按所属项目逐批进行。本批不改变采集、模型或硬件启动策略。
+
+
+## 2026-09-27：归并到 Cobot Web
+
+- 用户要求直接在对应项目维护，不再单开 ops 项目对话。网页使用／任务与 HTTP 故障归 cobot-web，其他领域直接交对应项目。
+- 新主代码：`/data/LFT-W02_data/jiaan/jiaan/projects/cobot-web/scripts/console.py`、`scripts/console_recovery.py`；手册在其 `docs/COMMAND_LINE.md`、`docs/WEB_RECOVERY.md`。
+- Cobot 同步副本：`/home/agilex/jiaan/project/cobot-web`。web 代码 `94840c1175227e7e339acbf3b8d15494065be8b6` 已 push、285 文件校验；现场只读 CLI、接口索引和文档可用后，旧工具改成转发。
+- 原 tests/test_console_recovery.py 迁入 web 的 app/backend/tests，不再保留两份；原完整手册在本仓库 Git 历史保留，当前文件只指向新入口。
+- 已有 runtime／恢复证据／tools/uv 均保持原位置，当前工作由对应项目接管；没有删除旧仓库或现场状态。兼容路径的实体迁移留待核对使用者后另批验收。
+- 验证与现场网页重启记录统一见 cobot-web/docs/MIGRATION.md，不再为同一业务在两个项目分别维护。
