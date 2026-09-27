@@ -1,6 +1,6 @@
 # Cobot 使用、部署与运维：迁移记录
 
-日期：2026-09-27。已完成入口初始化与**恢复证据归档迁移**，业务代码、模型和服务尚未迁移。跨项目迁移由当前已有 cobot_rlt 对话统筹执行。
+更新：2026-09-27。入口初始化、恢复证据归档、网页新目录切换和本页末尾的终端恢复入口批次已完成；模型／数据和部分硬件环境仍有旧路径依赖。跨项目迁移由当前已有 cobot_rlt 对话统筹执行。以下早期批次保留当时状态。
 
 ## 已有位置与成果
 
@@ -52,3 +52,19 @@
 - 新建 Cobot 项目文件，包括临时排障和恢复证据，均归到 `/home/agilex/jiaan/project/<项目>/`；采集和评测数据归到 `/home/agilex/jiaan/data/`。其他历史散落资产按后续明确批次处理。
 
 下一批候选仍是只读状态查询及现用命令梳理；本次未扩展迁移业务代码、模型或完整运行环境。
+
+
+## 2026-09-27：网页故障手册与独立终端恢复入口（已验证部署）
+
+- 用户需求：演示时可不依赖网页／助手自行诊断 HTTP 失败、重启网页、核验并中断任务及其残留进程。
+- 本批新增：`docs/WEB_RECOVERY.md`、`scripts/console_recovery.py`、`tests/test_console_recovery.py`；更新项目入口。没有迁移模型／数据或清理任何旧业务文件。
+- 主工作区：`/data/LFT-W02_data/jiaan/jiaan/projects/cobot-ops`；Cobot 现场副本：`/home/agilex/jiaan/project/cobot-ops`。运维脚本仅需 Python 3 标准库；Git 和测试留在 A6000。
+- 代码发布：`2bebb3f6f183f53e5a8fe34c3312082f5a21ff3e` 为初始恢复工具；`da1f9a9cbbb61fae72569e51b8df0a45778ca2ea` 补齐 ROS 子节点独立 session 的追踪，均已 push 并核对 origin/main。当前记录在验证后追加，后续文档版本以 main 为准。
+- A6000 验证：13 个 pytest 用例通过；Python 3.8 编译与 git diff --check 通过。模拟独立进程测试覆盖普通子进程、不同进程组、ROS 式新 session、父进程先退出、残留身份登记、PID 复用拒绝、网页仅发单 PID 信号、Stage 1 使用中拒绝、暂停响应确认。
+- Cobot 验证：状态、帮助、web／arms／cameras 停止预览成功；实际识别 web 1、arms 7、cameras 4、ROS Core 3 个进程。4 项网页 API 返回 200；模型 offline、普通采集 active_mode 为空，8026 未启动符合当前无模型状态。
+- 所有现场检查均只读或生成诊断文件；没有调用 pause、带 execute 的 interrupt、归位、重启或任何运动命令。网页及已有硬件进程保持原 PID。测试不是实机停止／恢复演练。
+- 文档／脚本首批 4 个文件 A6000 与 Cobot SHA-256 一致；记录追加后同步迁移说明，最终现场校验登记在 Cobot `.release.json`。
+- 证据：A6000 `outputs/verification/20260927-web-recovery/`。现场 snapshot：`/home/agilex/jiaan/project/cobot-ops/runtime/incidents/20260927T212036-936826`。输出和日志不入 Git。
+- 当前网页源版本：`3b54cf7f58f1a35f70756194cb218484ee39c0e9`，运行目录 `/home/agilex/jiaan/project/cobot-web/app/backend`，端口 8015；相关切换证据和接口修复归 cobot-web。运维 runtime 已被使用，不再处于“只有空目录”的状态。
+- 已查明 ROS launch 为每个节点创建独立 session：单纯杀父 PID 或只观察父 session 不足。工具按真实父子关系记录已见子进程，在自身中断后继续核验残留；在观察之前已脱离父进程且缺少可靠身份的任务仍需要人工核查，绝不泛匹配杀进程。
+- 下一步：按现场真实故障继续补充手册；算法／模型迁移仍按所属项目逐批进行。本批不改变采集、模型或硬件启动策略。
