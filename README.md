@@ -8,8 +8,8 @@
 - A6000 主工作区：`/data/LFT-W02_data/jiaan/jiaan/projects/cobot-ops`。
 - 笔记本对话入口：`D:\Code\jiaan_workspace\cobot-ops`。
 - 自有独立仓库：`https://github.com/ajwwja777/cobot-ops`（目标分支 `main`）。
-- Cobot 目标部署位置：`/home/agilex/jiaan/project/cobot-ops`，本轮尚未部署。
-- 当前阶段：入口与仓库初始化；旧业务代码、环境、模型和数据尚未迁移，现有服务入口未切换。
+- Cobot 位置：`/home/agilex/jiaan/project/cobot-ops`，目录已建立；恢复证据已归入 `runtime/recovery/`，运维程序尚未部署。
+- 当前阶段：入口与仓库已初始化，六个 Cobot 项目目录及数据目录已建立，恢复证据批次已验收迁移；业务代码、环境、模型和数据仍待分批迁移，现有服务入口未切换。
 
 ## 负责什么
 
@@ -35,7 +35,7 @@ Cobot 采集及评测数据统一规划在 `/home/agilex/jiaan/data/`。模型�
 
 旧位置、验收条件和切换／清理规则见迁移记录。
 
-来源：2026-09-27 用户确认的项目划分、机器职责与逐批迁移方案；本轮范围仅初始化。
+来源：2026-09-27 用户确认的项目划分、机器职责与逐批迁移方案。用户指定已有 cobot_rlt 对话继续统筹跨项目迁移；领域项目按需交接专业维护。当前已验收恢复证据批次，详见 `docs/MIGRATION.md`。
 
 ## 保留事项
 
