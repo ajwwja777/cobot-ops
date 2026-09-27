@@ -1,18 +1,11 @@
-# Cobot 运维旧入口（已并入对应项目）
+# Cobot Ops 历史仓库
 
-2026-09-27 用户决定不再单独维护 ops 项目。网页使用、启停、任务／PID 管理、故障恢复和终端操作归 [cobot-web](https://github.com/ajwwja777/cobot-web)；硬件、数采和算法直接在相应项目沟通。
+2026-09-27 独立 ops 项目取消。工具、文档、runtime、uv 和恢复证据均由 [cobot-web](https://github.com/ajwwja777/cobot-web) 接管；不再使用本仓库作为执行入口。
 
-## 现在使用哪里
+- 主代码与 Git：A6000 /data/LFT-W02_data/jiaan/jiaan/projects/cobot-web。
+- 现场入口：Cobot /home/agilex/jiaan/project/cobot-web。
+- 手册：cobot-web/docs/COMMAND_LINE.md 与 docs/WEB_RECOVERY.md。
+- 新 runtime：/home/agilex/jiaan/project/cobot-web/runtime；uv：同项目 tools/uv。
+- 旧本地 checkout 和现场目录在备份核验后清理；实际清理回执、备份位置和限制见 cobot-web/docs/MIGRATION.md。
 
-- A6000：`/data/LFT-W02_data/jiaan/jiaan/projects/cobot-web`。
-- Cobot：`/home/agilex/jiaan/project/cobot-web`。
-- [完整命令行流程](https://github.com/ajwwja777/cobot-web/blob/main/docs/COMMAND_LINE.md)。
-- [故障恢复手册](https://github.com/ajwwja777/cobot-web/blob/main/docs/WEB_RECOVERY.md)。
-- 常用入口：在 cobot-web 中运行 `python3 scripts/console.py --help`。
-- 原 `scripts/console_recovery.py` 仅转发到同级 cobot-web，不再维护第二份实现。
-
-## 为什么旧目录还在
-
-现场 `runtime/` 中有运行中的网页日志、PID、任务状态、恢复证据，`tools/uv` 仍被部署流程使用。本批保留这些路径，不能在服务写入时直接删除。它们由对应项目接管，后续在明确停机／验证批次搬迁；保留目录不表示仍有独立运维服务。
-
-本仓库只保留迁移历史和兼容指引，Git 历史不删除。具体证据见 [迁移记录](docs/MIGRATION.md)。
+此 Git 仓库仅保留历史，不需 clone 或启动。硬件、数据和算法问题直接在所属项目处理。
